@@ -185,4 +185,4 @@ const likePost = async (req, res) => {
   }
 };
 
-module.exports = { getPosts, getPost, createPost, updatePost, deletePost, likePost };
+module.exports = { getPosts, getPost, getPostById, createPost, updatePost, deletePost, likePost };
