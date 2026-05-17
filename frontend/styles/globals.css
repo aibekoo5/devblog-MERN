@@ -476,6 +476,13 @@ img { max-width: 100%; display: block; }
 
 /* ── Cover image upload ── */
 .cover-upload-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-height: 240px;
   border: 2px dashed var(--border-2);
   border-radius: var(--radius-lg);
   padding: 32px;
@@ -483,6 +490,7 @@ img { max-width: 100%; display: block; }
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
   margin-bottom: 20px;
+  background: transparent;
 }
 .cover-upload-area:hover { border-color: var(--accent); background: var(--accent-bg); }
 .cover-preview {
