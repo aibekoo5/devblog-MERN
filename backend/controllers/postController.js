@@ -62,6 +62,20 @@ const getPost = async (req, res) => {
   }
 };
 
+const getPostById = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate('author', 'username avatar bio')
+      .populate('tags', 'name slug color');
+
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    res.json(post);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // POST /api/posts
 const createPost = async (req, res) => {
   try {

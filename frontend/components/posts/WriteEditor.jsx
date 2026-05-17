@@ -33,8 +33,23 @@ export default function WriteEditor() {
   // Load post if editing
   useEffect(() => {
     if (!editId) return;
-    postsAPI.getAll({ limit: 1 }).catch(() => {});
-    // Fetch post by id via search (workaround — ideally add GET /posts/:id route)
+
+    const loadPost = async () => {
+      try {
+        const post = await postsAPI.getById(editId);
+        setTitle(post.title || '');
+        setContent(post.content || '');
+        setExcerpt(post.excerpt || '');
+        setCoverImage(post.coverImage || '');
+        setCoverImagePreview(post.coverImage || '');
+        setSelectedTags(post.tags?.map((tag) => tag._id) || []);
+        setPublished(Boolean(post.published));
+      } catch (error) {
+        console.error('Failed to load post for editing:', error);
+      }
+    };
+
+    loadPost();
   }, [editId]);
 
   const handleCoverUpload = async (e) => {

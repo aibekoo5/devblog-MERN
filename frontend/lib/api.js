@@ -32,6 +32,7 @@ export const postsAPI = {
     return apiFetch(`/posts${qs ? '?' + qs : ''}`);
   },
   getOne: (slug) => apiFetch(`/posts/${slug}`),
+  getById: (id) => apiFetch(`/posts/id/${id}`),
   create: (body) => apiFetch('/posts', { method: 'POST', body: JSON.stringify(body) }),
   update: (id, body) => apiFetch(`/posts/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   delete: (id) => apiFetch(`/posts/${id}`, { method: 'DELETE' }),
