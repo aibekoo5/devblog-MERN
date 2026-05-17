@@ -16,6 +16,7 @@ export default function WriteEditor() {
   const [content, setContent] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [coverImagePreview, setCoverImagePreview] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [published, setPublished] = useState(false);
   const [allTags, setAllTags] = useState([]);
@@ -39,14 +40,18 @@ export default function WriteEditor() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setError('');
     try {
       // Use UploadThing SDK v7 — uploadFiles sends to /api/uploadthing automatically
       const { uploadFiles } = await import('@uploadthing/react');
       const [res] = await uploadFiles('postCoverUploader', { files: [file] });
       setCoverImage(res.url);
+      setCoverImagePreview(res.url);
     } catch {
-      // Fallback to local preview during development without keys
-      setCoverImage(URL.createObjectURL(file));
+      const previewUrl = URL.createObjectURL(file);
+      setCoverImage('');
+      setCoverImagePreview(previewUrl);
+      setError('Cover upload failed. This preview is local only and will not be saved until upload succeeds.');
     }
     setUploading(false);
   };
@@ -60,6 +65,10 @@ export default function WriteEditor() {
   const handleSubmit = async (pub) => {
     if (!title.trim() || !content.trim()) {
       setError('Title and content are required.');
+      return;
+    }
+    if (coverImagePreview && !coverImage) {
+      setError('Cover image upload failed. Please re-upload or remove the cover image before publishing.');
       return;
     }
     setSubmitting(true);
@@ -85,6 +94,9 @@ export default function WriteEditor() {
     setSubmitting(false);
   };
 
+  const coverSrc = coverImagePreview || coverImage;
+  const isLocalPreview = coverImagePreview.startsWith('blob:');
+
   if (loading) return <div className="flex-center" style={{ padding: 80 }}><span className="spinner" /></div>;
   if (!user) {
     router.push('/login');
@@ -98,20 +110,32 @@ export default function WriteEditor() {
       </h1>
 
       {/* Cover image upload */}
-      {coverImage ? (
+      {coverSrc ? (
         <div style={{ position: 'relative', marginBottom: 20 }}>
-          <Image
-            src={coverImage}
-            alt="Cover"
-            width={760}
-            height={240}
-            className="cover-preview"
-            style={{ objectFit: 'cover' }}
-          />
+          {isLocalPreview ? (
+            <img
+              src={coverSrc}
+              alt="Cover"
+              className="cover-preview"
+              style={{ width: 760, height: 240, objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <Image
+              src={coverSrc}
+              alt="Cover"
+              width={760}
+              height={240}
+              className="cover-preview"
+              style={{ objectFit: 'cover' }}
+            />
+          )}
           <button
             className="btn btn-outline btn-sm"
             style={{ position: 'absolute', top: 10, right: 10 }}
-            onClick={() => setCoverImage('')}
+            onClick={() => {
+              setCoverImage('');
+              setCoverImagePreview('');
+            }}
           >
             Remove
           </button>

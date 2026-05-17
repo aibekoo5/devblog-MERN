@@ -46,10 +46,12 @@ export default function PostDetail({ slug }) {
   if (loading) return <div className="flex-center" style={{ padding: 80 }}><span className="spinner" /></div>;
   if (!post) return <div className="empty-state"><p>Post not found</p></div>;
 
+  const coverImage = post.coverImage && !post.coverImage.startsWith('blob:') ? post.coverImage : '';
+
   return (
     <article>
       {/* Cover image */}
-      {post.coverImage && (
+      {coverImage && (
         <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 24, height: 280, position: 'relative' }}>
           <img src={post.coverImage} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         </div>
