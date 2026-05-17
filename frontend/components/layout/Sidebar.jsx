@@ -8,7 +8,6 @@ import { tagsAPI } from '@/lib/api';
 
 const navLinks = [
   { href: '/', label: '🏠 Home' },
-  { href: '/posts', label: '📰 Feed' },
 ];
 
 const authLinks = [
