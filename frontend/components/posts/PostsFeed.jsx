@@ -77,7 +77,7 @@ export default function PostsFeed({ tagSlug, authorId }) {
       ) : (
         posts.map((post) => <PostCard key={post._id} post={post} />)
       )}
-
+  
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="pagination">

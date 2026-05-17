@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+
 import { postsAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import CommentsSection from '@/components/comments/CommentsSection';
