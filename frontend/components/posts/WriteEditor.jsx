@@ -43,7 +43,7 @@ export default function WriteEditor() {
     setError('');
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('devblog_token') : null;
-      if (!token) throw new Error('Not authenticated');
+      if (!token) throw new Error('You must be logged in to upload a cover image.');
       // Use UploadThing SDK v7 — uploadFiles sends to /api/uploadthing automatically
       const { uploadFiles } = await import('@uploadthing/react');
       const [res] = await uploadFiles('postCoverUploader', {
@@ -56,7 +56,12 @@ export default function WriteEditor() {
       const previewUrl = URL.createObjectURL(file);
       setCoverImage('');
       setCoverImagePreview(previewUrl);
-      setError('Cover upload failed. This preview is local only and will not be saved until upload succeeds.');
+      console.error('Cover upload error:', err);
+      setError(
+        err?.message
+          ? `Cover upload failed: ${err.message}`
+          : 'Cover upload failed. This preview is local only and will not be saved until upload succeeds.'
+      );
     }
     setUploading(false);
   };
