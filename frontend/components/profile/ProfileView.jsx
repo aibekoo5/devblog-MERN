@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { authAPI, postsAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { uploadFiles } from '@/lib/uploadthing-client';
 import PostCard from '@/components/posts/PostCard';
 import Avatar from '@/components/ui/Avatar';
 
@@ -53,8 +54,6 @@ export default function ProfileView({ username }) {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('devblog_token') : null;
       if (!token) throw new Error('Not authenticated');
-      // UploadThing SDK v7 — uploads to /api/uploadthing and returns CDN URL
-      const { uploadFiles } = await import('@uploadthing/react');
       const [res] = await uploadFiles('avatarUploader', {
         files: [file],
         headers: { Authorization: `Bearer ${token}` },

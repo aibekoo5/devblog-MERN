@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { postsAPI, tagsAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { uploadFiles } from '@/lib/uploadthing-client';
 
 export default function WriteEditor() {
   const { user, loading } = useAuth();
@@ -44,8 +45,6 @@ export default function WriteEditor() {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('devblog_token') : null;
       if (!token) throw new Error('You must be logged in to upload a cover image.');
-      // Use UploadThing SDK v7 — uploadFiles sends to /api/uploadthing automatically
-      const { uploadFiles } = await import('@uploadthing/react');
       const [res] = await uploadFiles('postCoverUploader', {
         files: [file],
         headers: { Authorization: `Bearer ${token}` },
