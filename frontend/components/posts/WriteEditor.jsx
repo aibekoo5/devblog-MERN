@@ -42,12 +42,17 @@ export default function WriteEditor() {
     setUploading(true);
     setError('');
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('devblog_token') : null;
+      if (!token) throw new Error('Not authenticated');
       // Use UploadThing SDK v7 — uploadFiles sends to /api/uploadthing automatically
       const { uploadFiles } = await import('@uploadthing/react');
-      const [res] = await uploadFiles('postCoverUploader', { files: [file] });
+      const [res] = await uploadFiles('postCoverUploader', {
+        files: [file],
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setCoverImage(res.url);
       setCoverImagePreview(res.url);
-    } catch {
+    } catch (err) {
       const previewUrl = URL.createObjectURL(file);
       setCoverImage('');
       setCoverImagePreview(previewUrl);

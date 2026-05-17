@@ -51,9 +51,14 @@ export default function ProfileView({ username }) {
     if (!file) return;
     setUploadingAvatar(true);
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('devblog_token') : null;
+      if (!token) throw new Error('Not authenticated');
       // UploadThing SDK v7 — uploads to /api/uploadthing and returns CDN URL
       const { uploadFiles } = await import('@uploadthing/react');
-      const [res] = await uploadFiles('avatarUploader', { files: [file] });
+      const [res] = await uploadFiles('avatarUploader', {
+        files: [file],
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const url = res.url;
       await authAPI.updateProfile({ avatar: url });
       updateUser({ avatar: url });
