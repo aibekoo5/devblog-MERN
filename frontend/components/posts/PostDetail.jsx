@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { postsAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import CommentsSection from '@/components/comments/CommentsSection';
@@ -51,7 +50,7 @@ export default function PostDetail({ slug }) {
       {/* Cover image */}
       {post.coverImage && (
         <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 24, height: 280, position: 'relative' }}>
-          <Image src={post.coverImage} alt={post.title} fill style={{ objectFit: 'cover' }} />
+          <img src={post.coverImage} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         </div>
       )}
 
