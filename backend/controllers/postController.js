@@ -1,7 +1,18 @@
 const Post = require('../models/Post');
 const Tag = require('../models/Tag');
+const Comment = require('../models/Comment');
 const { generateSlug } = require('../utils/helpers');
 
+// Helper to add commentCount to post(s)
+const addCommentCounts = async (posts) => {
+  if (!Array.isArray(posts)) posts = [posts];
+  return Promise.all(
+    posts.map(async (post) => {
+      const count = await Comment.countDocuments({ post: post._id });
+      return { ...post.toObject?.() || post, commentCount: count };
+    })
+  );
+};
 // GET /api/posts  — list with search & filter
 const getPosts = async (req, res) => {
   try {
@@ -32,8 +43,10 @@ const getPosts = async (req, res) => {
       Post.countDocuments(query),
     ]);
 
+    const postsWithCommentCounts = await addCommentCounts(posts);
+
     res.json({
-      posts,
+      posts: postsWithCommentCounts,
       total,
       pages: Math.ceil(total / Number(limit)),
       page: Number(page),
@@ -56,7 +69,8 @@ const getPost = async (req, res) => {
 
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    res.json(post);
+    const [postWithComments] = await addCommentCounts([post]);
+    res.json(postWithComments);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -70,7 +84,8 @@ const getPostById = async (req, res) => {
 
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    res.json(post);
+    const [postWithComments] = await addCommentCounts([post]);
+    res.json(postWithComments);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -104,7 +119,8 @@ const createPost = async (req, res) => {
     await post.populate('author', 'username avatar');
     await post.populate('tags', 'name slug color');
 
-    res.status(201).json(post);
+    const [postWithComments] = await addCommentCounts([post]);
+    res.status(201).json(postWithComments);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -140,7 +156,8 @@ const updatePost = async (req, res) => {
     await post.populate('author', 'username avatar');
     await post.populate('tags', 'name slug color');
 
-    res.json(post);
+    const [postWithComments] = await addCommentCounts([post]);
+    res.json(postWithComments);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
