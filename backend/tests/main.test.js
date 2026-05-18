@@ -1,29 +1,34 @@
 /**
  * DevBlog Test Suite — 10 meaningful test cases
- * Covers: model validation, utility functions, route handlers,
- *         API integration (Supertest), and auth middleware.
  */
+
+require('dotenv').config();
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_secret_key';
 
 const mongoose = require('mongoose');
 const request = require('supertest');
 
-// ─── Setup: in-memory-like test DB ──────────────────────────────────────────
+const ATLAS_URI = 'mongodb+srv://aibekkemel_db_user:bVvfV4nyT70ePNPF@devblog.alidcsg.mongodb.net/devblog_test?appName=devblog';
+
 beforeAll(async () => {
-  await mongoose.connect(
-    process.env.MONGODB_URI || 'mongodb://localhost:27017/devblog_test'
-  );
-});
+  await mongoose.connect(process.env.MONGODB_URI || ATLAS_URI, {
+    serverSelectionTimeoutMS: 15000,
+  });
+}, 20000);
 
 afterAll(async () => {
-  await mongoose.connection.dropDatabase();
+  // Only delete test users, never drop entire DB
+  try {
+    await mongoose.connection.collection('users').deleteMany({ email: /@test\.com$/ });
+  } catch {}
   await mongoose.connection.close();
-});
+}, 10000);
 
-// ─── 1. Unit: User model validation ─────────────────────────────────────────
+// ─── 1-3. UNIT: User model validation ────────────────────────────────────────
 describe('Unit — User model validation', () => {
   const User = require('../models/User');
 
-  test('1. Rejects user without required fields', async () => {
+  test('1. Rejects user without required fields', () => {
     const user = new User({});
     const err = user.validateSync();
     expect(err.errors.username).toBeDefined();
@@ -31,24 +36,23 @@ describe('Unit — User model validation', () => {
     expect(err.errors.password).toBeDefined();
   });
 
-  test('2. Rejects invalid email format', async () => {
+  test('2. Rejects invalid email format', () => {
     const user = new User({ username: 'test', email: 'not-an-email', password: 'secret123' });
     const err = user.validateSync();
     expect(err.errors.email).toBeDefined();
   });
 
-  test('3. Accepts valid user data', async () => {
+  test('3. Accepts valid user data', () => {
     const user = new User({
       username: 'validuser',
       email: 'valid@example.com',
       password: 'password123',
     });
-    const err = user.validateSync();
-    expect(err).toBeUndefined();
+    expect(user.validateSync()).toBeUndefined();
   });
 });
 
-// ─── 2. Unit: Utility function ───────────────────────────────────────────────
+// ─── 4-6. UNIT: Utility functions ────────────────────────────────────────────
 describe('Unit — generateSlug utility', () => {
   const { generateSlug } = require('../utils/helpers');
 
@@ -65,16 +69,13 @@ describe('Unit — generateSlug utility', () => {
   });
 });
 
-// ─── 3. Unit: Auth middleware ────────────────────────────────────────────────
+// ─── 7. UNIT: Auth middleware (mocked) ───────────────────────────────────────
 describe('Unit — Auth middleware (mocked)', () => {
   const { protect } = require('../middleware/auth');
 
   test('7. Returns 401 when no Authorization header', async () => {
     const req = { headers: {} };
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
     const next = jest.fn();
 
     await protect(req, res, next);
@@ -87,17 +88,17 @@ describe('Unit — Auth middleware (mocked)', () => {
   });
 });
 
-// ─── 4. Integration: API endpoints (Supertest) ───────────────────────────────
+// ─── 8-10. INTEGRATION: Auth API via Supertest ───────────────────────────────
 describe('Integration — Auth API endpoints', () => {
-  // Inline minimal app to avoid starting the real server
   const express = require('express');
   const app = express();
   app.use(express.json());
   app.use('/api/auth', require('../routes/auth'));
 
+  const ts = Date.now();
   const testUser = {
-    username: `tester_${Date.now()}`,
-    email: `tester_${Date.now()}@test.com`,
+    username: `tester_${ts}`,
+    email: `tester_${ts}@test.com`,
     password: 'testpass123',
   };
   let authToken;
@@ -108,7 +109,7 @@ describe('Integration — Auth API endpoints', () => {
     expect(res.body).toHaveProperty('token');
     expect(res.body.user.email).toBe(testUser.email);
     authToken = res.body.token;
-  });
+  }, 15000);
 
   test('9. POST /api/auth/login — returns token on valid credentials', async () => {
     const res = await request(app)
@@ -116,7 +117,7 @@ describe('Integration — Auth API endpoints', () => {
       .send({ email: testUser.email, password: testUser.password });
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('token');
-  });
+  }, 15000);
 
   test('10. GET /api/auth/me — returns user data with valid token', async () => {
     const res = await request(app)
@@ -125,5 +126,5 @@ describe('Integration — Auth API endpoints', () => {
     expect(res.status).toBe(200);
     expect(res.body.email).toBe(testUser.email);
     expect(res.body).not.toHaveProperty('password');
-  });
+  }, 15000);
 });

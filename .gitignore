@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables - NEVER commit these
+.env
+.env.local
+.env.development
+.env.production
+.env*.local
+
+# Next.js build output
+.next/
+out/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Jest cache
+.jest-cache/
+coverage/
+
+# Vercel
+.vercel
