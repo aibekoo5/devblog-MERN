@@ -2,6 +2,7 @@ const Post = require('../models/Post');
 const Tag = require('../models/Tag');
 const Comment = require('../models/Comment');
 const { generateSlug } = require('../utils/helpers');
+const { notifyUser } = require('../utils/websocket');
 
 // Helper to add commentCount to post(s)
 const addCommentCounts = async (posts) => {
@@ -193,6 +194,15 @@ const likePost = async (req, res) => {
       post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
     } else {
       post.likes.push(userId);
+      // Send notification to post author if someone likes their post
+      if (post.author.toString() !== userId.toString()) {
+        notifyUser(post.author, {
+          message: `${req.user.username || 'Someone'} liked your post "${post.title}"`,
+          type: 'like',
+          postId: post._id,
+          postSlug: post.slug,
+        });
+      }
     }
 
     await post.save();

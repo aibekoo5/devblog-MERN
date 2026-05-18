@@ -1,5 +1,6 @@
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+const { notifyUser } = require('../utils/websocket');
 
 // GET /api/posts/:postId/comments
 const getComments = async (req, res) => {
@@ -50,6 +51,29 @@ const createComment = async (req, res) => {
     });
 
     await comment.populate('author', 'username avatar');
+
+    // Send notification to post author if commenter is not the author
+    if (post.author.toString() !== req.user._id.toString()) {
+      notifyUser(post.author, {
+        message: `${req.user.username || 'Someone'} commented on your post "${post.title}"`,
+        type: 'comment',
+        postId: post._id,
+        postSlug: post.slug,
+      });
+    }
+
+    // Send notification to parent comment author if this is a reply
+    if (parentComment) {
+      const parentComment_obj = await Comment.findById(parentComment);
+      if (parentComment_obj && parentComment_obj.author.toString() !== req.user._id.toString()) {
+        notifyUser(parentComment_obj.author, {
+          message: `${req.user.username || 'Someone'} replied to your comment`,
+          type: 'reply',
+          postId: post._id,
+          postSlug: post.slug,
+        });
+      }
+    }
 
     res.status(201).json(comment);
   } catch (error) {
