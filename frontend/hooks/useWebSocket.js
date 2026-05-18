@@ -2,58 +2,79 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-export function useWebSocket() {
+export function useWebSocket(token) {
   const ws = useRef(null);
   const [onlineCount, setOnlineCount] = useState(0);
   const [onlineUserIds, setOnlineUserIds] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [connected, setConnected] = useState(false);
 
-  const connect = useCallback((token) => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
-    const url = token ? `${wsUrl}?token=${token}` : wsUrl;
+  // Connect on token change
+  useEffect(() => {
+    const connect = () => {
+      if (!token) return;
+      
+      // Close previous connection if exists
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.close();
+      }
 
-    ws.current = new WebSocket(url);
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
+      const url = `${wsUrl}?token=${token}`;
 
-    ws.current.onopen = () => {
-      setConnected(true);
-      // Keep-alive ping every 30s
-      const ping = setInterval(() => {
-        if (ws.current?.readyState === WebSocket.OPEN) {
-          ws.current.send(JSON.stringify({ type: 'ping' }));
+      ws.current = new WebSocket(url);
+
+      ws.current.onopen = () => {
+        setConnected(true);
+        console.log('[WebSocket] Connected');
+        // Keep-alive ping every 30s
+        const ping = setInterval(() => {
+          if (ws.current?.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 30000);
+        ws.current._ping = ping;
+      };
+
+      ws.current.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          console.log('[WebSocket] Message received:', msg.type);
+          if (msg.type === 'online_users') {
+            setOnlineCount(msg.count);
+            setOnlineUserIds(msg.userIds);
+          } else if (msg.type === 'notification') {
+            console.log('[WebSocket] Notification:', msg.message);
+            setNotifications((prev) => [msg, ...prev].slice(0, 20));
+          }
+        } catch (err) {
+          console.error('[WebSocket] Parse error:', err);
         }
-      }, 30000);
-      ws.current._ping = ping;
+      };
+
+      ws.current.onclose = () => {
+        setConnected(false);
+        clearInterval(ws.current?._ping);
+        console.log('[WebSocket] Disconnected');
+      };
+
+      ws.current.onerror = (err) => {
+        console.error('[WebSocket] Error:', err);
+        setConnected(false);
+      };
     };
 
-    ws.current.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'online_users') {
-          setOnlineCount(msg.count);
-          setOnlineUserIds(msg.userIds);
-        } else if (msg.type === 'notification') {
-          setNotifications((prev) => [msg, ...prev].slice(0, 20));
-        }
-      } catch { /* ignore */ }
+    connect();
+
+    // Cleanup on unmount or token change
+    return () => {
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.close();
+      }
     };
-
-    ws.current.onclose = () => {
-      setConnected(false);
-      clearInterval(ws.current?._ping);
-    };
-
-    ws.current.onerror = () => setConnected(false);
-  }, []);
-
-  const disconnect = useCallback(() => {
-    clearInterval(ws.current?._ping);
-    ws.current?.close();
-  }, []);
+  }, [token]);
 
   const clearNotifications = () => setNotifications([]);
 
-  useEffect(() => () => disconnect(), [disconnect]);
-
-  return { connect, disconnect, connected, onlineCount, onlineUserIds, notifications, clearNotifications };
+  return { connected, onlineCount, onlineUserIds, notifications, clearNotifications };
 }

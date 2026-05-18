@@ -14,7 +14,6 @@ const setupWebSocket = (server) => {
     const token = params.token;
 
     let userId = null;
-    let username = null;
 
     if (token) {
       try {
@@ -27,11 +26,15 @@ const setupWebSocket = (server) => {
         }
         onlineUsers.get(userId).add(ws);
 
+        console.log(`[WebSocket] User ${userId} connected. Total online: ${onlineUsers.size}`);
+
         // Broadcast updated online list to all clients
         broadcastOnlineUsers(wss);
-      } catch {
-        // Unauthenticated — still can receive public broadcasts
+      } catch (err) {
+        console.error('[WebSocket] Token verification failed:', err.message);
       }
+    } else {
+      console.log('[WebSocket] Connection without token');
     }
 
     ws.on('message', (data) => {
@@ -42,8 +45,8 @@ const setupWebSocket = (server) => {
         if (msg.type === 'ping') {
           ws.send(JSON.stringify({ type: 'pong' }));
         }
-      } catch {
-        // Ignore malformed messages
+      } catch (err) {
+        console.error('[WebSocket] Message parse error:', err.message);
       }
     });
 
@@ -53,12 +56,13 @@ const setupWebSocket = (server) => {
         if (onlineUsers.get(userId).size === 0) {
           onlineUsers.delete(userId);
         }
+        console.log(`[WebSocket] User ${userId} disconnected. Total online: ${onlineUsers.size}`);
         broadcastOnlineUsers(wss);
       }
     });
 
     ws.on('error', (err) => {
-      console.error('WebSocket error:', err.message);
+      console.error('[WebSocket] Connection error:', err.message);
     });
   });
 
@@ -82,10 +86,17 @@ const broadcastOnlineUsers = (wss) => {
 
 // Send notification to a specific user (all their connections)
 const notifyUser = (userId, notification) => {
-  const connections = onlineUsers.get(userId.toString());
-  if (!connections) return;
+  const userIdStr = userId.toString();
+  const connections = onlineUsers.get(userIdStr);
+  
+  if (!connections || connections.size === 0) {
+    console.log(`[WebSocket] User ${userIdStr} not online, skipping notification`);
+    return;
+  }
 
   const payload = JSON.stringify({ type: 'notification', ...notification });
+  console.log(`[WebSocket] Sending notification to user ${userIdStr}:`, notification.message);
+  
   connections.forEach((ws) => {
     if (ws.readyState === 1) {
       ws.send(payload);

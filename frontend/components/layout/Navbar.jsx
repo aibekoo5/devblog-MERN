@@ -8,15 +8,11 @@ import Avatar from '@/components/ui/Avatar';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const { connect, onlineCount, notifications, clearNotifications } = useWebSocket();
+  const token = typeof window !== 'undefined' ? localStorage.getItem('devblog_token') : null;
+  const { connected, onlineCount, notifications, clearNotifications } = useWebSocket(token);
   const [showNotifs, setShowNotifs] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const notifRef = useRef(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem('devblog_token');
-    connect(token);
-  }, [connect]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -29,6 +25,11 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const handleLogout = () => {
+    logout();
+    setShowMenu(false);
+  };
+
   return (
     <nav className="navbar">
       <Link href="/" className="navbar-logo">
@@ -38,7 +39,7 @@ export default function Navbar() {
       <div className="navbar-actions">
         {/* Online users indicator */}
         <div className="online-badge">
-          <span className="online-dot" />
+          <span className="online-dot" style={{ backgroundColor: connected ? '#22c55e' : '#ef4444' }} />
           {onlineCount} online
         </div>
 
