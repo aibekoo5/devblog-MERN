@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { postsAPI } from '@/lib/api';
@@ -42,6 +43,18 @@ export default function PostDetail({ slug }) {
       setLikeCount(res.likes);
     } catch (e) {
       alert(e.message);
+    }
+  };
+
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this post? This action cannot be undone.')) return;
+    try {
+      await postsAPI.delete(post._id);
+      router.push('/');
+    } catch (e) {
+      alert(e.message || 'Failed to delete post');
     }
   };
 
@@ -88,6 +101,7 @@ export default function PostDetail({ slug }) {
         {user && user._id === post.author?._id && (
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <Link href={`/write?edit=${post._id}`} className="btn btn-outline btn-sm">Edit</Link>
+            <button onClick={handleDelete} className="btn btn-danger btn-sm">Delete</button>
           </div>
         )}
       </div>
