@@ -251,13 +251,6 @@ export default function WriteEditor() {
         >
           {submitting ? 'Publishing...' : 'Publish'}
         </button>
-        <button
-          className="btn btn-outline"
-          onClick={() => handleSubmit(false)}
-          disabled={submitting}
-        >
-          Save draft
-        </button>
         <button className="btn btn-ghost" onClick={() => router.back()}>
           Cancel
         </button>
