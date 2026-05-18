@@ -41,7 +41,7 @@ export default function PostCard({ post }) {
           <span className="post-stat">❤️ {post.likes?.length ?? 0}</span>
           <span className="post-stat">💬 {post.commentCount ?? 0}</span>
           <span className="post-stat">👁 {post.views ?? 0}</span>
-          <span className="post-stat">⏱ {post.readingTime}m</span>
+          <span className="post-stat">⏱ {post.readingTime} min read</span>
         </div>
       </div>
     </article>
