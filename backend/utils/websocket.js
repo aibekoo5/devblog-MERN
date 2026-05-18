@@ -1,6 +1,5 @@
 const { WebSocketServer } = require('ws');
 const jwt = require('jsonwebtoken');
-const url = require('url');
 
 // Map: userId -> Set of WebSocket connections
 const onlineUsers = new Map();
@@ -10,8 +9,8 @@ const setupWebSocket = (server) => {
 
   wss.on('connection', (ws, req) => {
     // Authenticate via token in query string
-    const params = url.parse(req.url, true).query;
-    const token = params.token;
+    const requestUrl = new URL(req.url, 'http://localhost');
+    const token = requestUrl.searchParams.get('token');
 
     let userId = null;
 

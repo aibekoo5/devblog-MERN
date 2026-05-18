@@ -19,7 +19,10 @@ export function useWebSocket(token) {
         ws.current.close();
       }
 
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
+      const defaultWsUrl = typeof window !== 'undefined' && window.location.protocol === 'https:'
+        ? 'wss://localhost:5000'
+        : 'ws://localhost:5000';
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || defaultWsUrl;
       const url = `${wsUrl}?token=${token}`;
 
       ws.current = new WebSocket(url);
